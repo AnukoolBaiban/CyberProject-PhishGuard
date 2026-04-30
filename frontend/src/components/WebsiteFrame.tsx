@@ -1,4 +1,4 @@
-import type { Choice, RedFlag } from '../types';
+import type { UiTrigger, UiTriggers, RedFlag } from '../types';
 import RedFlagHighlighter from './RedFlagHighlighter';
 
 interface Props {
@@ -7,9 +7,51 @@ interface Props {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    choices: Choice[];
-    onChoice: (label: string) => void;
+    uiTriggers: UiTriggers;
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
+}
+
+function ClickableContent({
+    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
+}: {
+    content: string;
+    redFlags: RedFlag[];
+    showRedFlags: boolean;
+    inlineLinks: UiTrigger[];
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
+    disabled: boolean;
+}) {
+    const urlRe = /(https?:\/\/[^\s]+)/g;
+    if (showRedFlags) {
+        return <RedFlagHighlighter content={content} redFlags={redFlags} showRedFlags={showRedFlags} />;
+    }
+    const parts = content.split(urlRe);
+    return (
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+            {parts.map((part, i) => {
+                if (urlRe.test(part) || part.startsWith('http')) {
+                    const failTrigger = inlineLinks.find(t => t.label === part || part.includes(t.label)) || inlineLinks[0];
+                    return (
+                        <span
+                            key={i}
+                            onClick={() => {
+                                if (disabled) return;
+                                if (failTrigger) onTrigger(failTrigger, false);
+                            }}
+                            style={{
+                                color: '#60cdff',
+                                textDecoration: 'underline',
+                                cursor: disabled ? 'default' : 'pointer',
+                                wordBreak: 'break-all',
+                            }}
+                        >{part}</span>
+                    );
+                }
+                return <span key={i}>{part}</span>;
+            })}
+        </span>
+    );
 }
 
 // ── Mini TradingView-style chart bars (decorative) ─────────────────────────
@@ -157,15 +199,11 @@ function FakeVideoPlayer({ onPlayClick }: { onPlayClick: () => void }) {
 }
 
 export default function WebsiteFrame({
-    content, redFlags, showRedFlags, choices, onChoice, disabled,
+    content, redFlags, showRedFlags, uiTriggers, onTrigger, disabled,
 }: Props) {
-    // Map choices
-    const downloadChoice = choices.find(c =>
-        /download|install|apk|click|โหลด|ดาวน์โหลด|ติดตั้ง|คลิก|กด/i.test(c.label)
-    ) ?? choices[0];
-    const closeChoice = choices.find(c =>
-        /close|report|ignore|safe|ปิด|รายงาน|ลบ|ไม่|ออก|แจ้ง/i.test(c.label)
-    ) ?? choices[1];
+    const downloadTrigger = uiTriggers.fail_triggers.find(t => t.type === 'download_button');
+    const reportTrigger = uiTriggers.pass_triggers.find(t => t.type === 'report_button');
+    const closeTabTrigger = uiTriggers.pass_triggers.find(t => t.type === 'close_tab');
 
     return (
         <div style={{
@@ -185,9 +223,12 @@ export default function WebsiteFrame({
                     height: 32, paddingLeft: 12, borderBottom: '1px solid #333',
                 }}>
                     {['#ff5f56', '#ffbd2e', '#27c93f'].map((c, i) => (
-                        <div key={i} style={{
-                            width: 12, height: 12, borderRadius: '50%',
-                            background: c, marginRight: 6,
+                        <div key={i} 
+                             onClick={() => { if (i === 0 && !disabled && closeTabTrigger) onTrigger(closeTabTrigger, true); }}
+                             style={{
+                                width: 12, height: 12, borderRadius: '50%',
+                                background: c, marginRight: 6,
+                                cursor: i === 0 && closeTabTrigger && !disabled ? 'pointer' : 'default',
                         }} />
                     ))}
                     <span style={{
@@ -300,7 +341,7 @@ export default function WebsiteFrame({
                                 }}>Official Product Launch — AI Trading Bot (Beta)</span>
                             </div>
 
-                            <FakeVideoPlayer onPlayClick={() => !disabled && downloadChoice && onChoice(downloadChoice.label)} />
+                            <FakeVideoPlayer onPlayClick={() => { if (!disabled && downloadTrigger) onTrigger(downloadTrigger, false); }} />
 
                             {/* Message Content */}
                             <div style={{
@@ -311,16 +352,23 @@ export default function WebsiteFrame({
                                 color: '#c9d1d9', fontSize: 13, lineHeight: 1.7,
                                 fontFamily: 'Inter, system-ui, sans-serif',
                             }}>
-                                <RedFlagHighlighter content={content} redFlags={redFlags} showRedFlags={showRedFlags} />
+                                <ClickableContent
+                                    content={content}
+                                    redFlags={redFlags}
+                                    showRedFlags={showRedFlags}
+                                    inlineLinks={uiTriggers.fail_triggers.filter(t => t.type === 'inline_link')}
+                                    onTrigger={onTrigger}
+                                    disabled={disabled}
+                                />
                             </div>
 
                             {/* Download & Close buttons */}
                             <div style={{ display: 'flex', gap: 10, marginTop: 14, paddingBottom: 24 }}>
                                 {/* Download — dangerous */}
-                                {downloadChoice && (
+                                {downloadTrigger && (
                                     <button
                                         disabled={disabled}
-                                        onClick={() => onChoice(downloadChoice.label)}
+                                        onClick={() => onTrigger(downloadTrigger, false)}
                                         style={{
                                             flex: 1, padding: '12px 0',
                                             background: disabled ? '#2d3748' : 'linear-gradient(135deg, #2b6cb0, #2196f3)',
@@ -333,14 +381,14 @@ export default function WebsiteFrame({
                                             boxShadow: disabled ? 'none' : '0 4px 20px rgba(33,150,243,0.4)',
                                         }}
                                     >
-                                        ⬇️ {downloadChoice.label}
+                                        ⬇️ {downloadTrigger.label}
                                     </button>
                                 )}
                                 {/* Report/Close — safe */}
-                                {closeChoice && (
+                                {reportTrigger && (
                                     <button
                                         disabled={disabled}
-                                        onClick={() => onChoice(closeChoice.label)}
+                                        onClick={() => onTrigger(reportTrigger, true)}
                                         style={{
                                             padding: '12px 20px',
                                             background: 'transparent',
@@ -353,7 +401,7 @@ export default function WebsiteFrame({
                                         onMouseEnter={e => { if (!disabled) { e.currentTarget.style.color = '#ff6b6b'; e.currentTarget.style.borderColor = '#ff6b6b'; } }}
                                         onMouseLeave={e => { e.currentTarget.style.color = '#787b86'; e.currentTarget.style.borderColor = '#2a2e39'; }}
                                     >
-                                        🚨 {closeChoice.label}
+                                        🚨 {reportTrigger.label}
                                     </button>
                                 )}
                             </div>

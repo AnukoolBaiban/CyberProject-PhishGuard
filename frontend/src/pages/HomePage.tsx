@@ -15,7 +15,7 @@ export default function HomePage() {
 
     const handleStart = () => {
         if (!nickname.trim()) {
-            setError('Enter your nickname to begin.');
+            setError('กรุณากรอกชื่อเล่นเพื่อเริ่มต้น');
             return;
         }
         sessionStorage.setItem('pg_nickname', nickname.trim());
@@ -52,15 +52,15 @@ export default function HomePage() {
                     <span className="text-cyber-text">Guard</span>
                 </h1>
                 <p className="text-cyber-muted text-lg max-w-md mx-auto leading-relaxed">
-                    Train your cyber instincts. Detect phishing attempts before they get you.
+                    ฝึกสัญชาตญาณไซเบอร์ของคุณ เรียนรู้วิธีตรวจจับ Phishing ก่อนที่มันจะหลอกคุณ
                 </p>
 
                 {/* Stats row */}
                 <div className="flex justify-center gap-8 mt-6">
                     {[
-                        { label: 'Scenarios', value: '3+' },
-                        { label: 'Threat Types', value: 'SMS & Email' },
-                        { label: 'Your Shield', value: 'Awaits' },
+                        { label: 'สถานการณ์', value: '5+' },
+                        { label: 'ประเภทภัยคุกคาม', value: 'SMS, Email, Web & Chat' },
+                        { label: 'เกราะป้องกัน', value: 'รอคุณอยู่' },
                     ].map((s) => (
                         <div key={s.label} className="text-center">
                             <div className="text-cyber-accent font-bold font-mono text-xl">{s.value}</div>
@@ -79,7 +79,7 @@ export default function HomePage() {
             >
                 <div>
                     <label htmlFor="nickname" className="block text-sm font-semibold text-cyber-text mb-2 font-mono">
-                        {'>'} Enter your nickname
+                        {'>'} กรอกชื่อเล่นของคุณ
                     </label>
                     <input
                         id="nickname"
@@ -87,7 +87,7 @@ export default function HomePage() {
                         value={nickname}
                         onChange={(e) => { setNickname(e.target.value); setError(''); }}
                         onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-                        placeholder="e.g. CyberWolf99"
+                        placeholder="เช่น CyberWolf99"
                         maxLength={30}
                         className="cyber-input"
                         autoComplete="off"
@@ -102,12 +102,12 @@ export default function HomePage() {
                     onClick={handleStart}
                     className="cyber-btn-primary w-full text-base flex items-center justify-center gap-2"
                 >
-                    <span>Start Simulation</span>
+                    <span>เริ่มการจำลอง</span>
                     <span>→</span>
                 </button>
 
                 <p className="text-center text-cyber-muted text-xs">
-                    No account needed. Your progress is saved anonymously.
+                    ไม่ต้องสมัครสมาชิก ข้อมูลของคุณถูกบันทึกแบบไม่ระบุตัวตน
                 </p>
             </motion.div>
 
@@ -118,7 +118,7 @@ export default function HomePage() {
                 transition={{ delay: 0.6 }}
                 className="mt-10 flex flex-wrap justify-center gap-3 text-xs text-cyber-muted"
             >
-                {['🚩 Red Flag Highlighter', '📊 Digital Immunity Score', '💡 Instant Feedback'].map((f) => (
+                {['🚩 ไฮไลต์จุดน่าสงสัย', '📊 คะแนนภูมิคุ้มกันดิจิทัล', '💡 ผลตอบรับทันที'].map((f) => (
                     <span key={f} className="px-3 py-1.5 border border-cyber-border rounded-full bg-cyber-surface">
                         {f}
                     </span>

@@ -12,7 +12,7 @@ const pageVariants = {
 
 export default function SummaryPage() {
     const navigate = useNavigate();
-    const nickname = sessionStorage.getItem('pg_nickname') ?? 'Agent';
+    const nickname = sessionStorage.getItem('pg_nickname') ?? 'ผู้ใช้งาน';
     const score = parseInt(sessionStorage.getItem('pg_score') ?? '0', 10);
     const total = parseInt(sessionStorage.getItem('pg_total') ?? '0', 10);
     const answers: Answer[] = JSON.parse(sessionStorage.getItem('pg_answers') ?? '[]');
@@ -54,9 +54,9 @@ export default function SummaryPage() {
                     transition={{ delay: 0.1 }}
                     className="text-center"
                 >
-                    <p className="text-cyber-muted text-sm font-mono mb-1">Mission Complete — {nickname}</p>
+                    <p className="text-cyber-muted text-sm font-mono mb-1">ภารกิจสำเร็จ — {nickname}</p>
                     <h1 className="text-4xl font-extrabold text-cyber-text">
-                        Your <span className="text-cyber-accent">Immunity</span> Report
+                        รายงาน <span className="text-cyber-accent">ภูมิคุ้มกัน</span>ของคุณ
                     </h1>
                 </motion.div>
 
@@ -73,7 +73,7 @@ export default function SummaryPage() {
                     {/* Score bar */}
                     <div className="w-full mt-6">
                         <div className="flex justify-between text-xs text-cyber-muted font-mono mb-1">
-                            <span>Accuracy</span>
+                            <span>ความแม่นยำ</span>
                             <span>{percentage}%</span>
                         </div>
                         <div className="h-2 bg-cyber-surface rounded-full overflow-hidden border border-cyber-border">
@@ -96,7 +96,7 @@ export default function SummaryPage() {
                         className="cyber-card p-6 space-y-3"
                     >
                         <h2 className="font-bold text-cyber-text flex items-center gap-2">
-                            <span>💡</span> Lessons Learned
+                            <span>💡</span> บทเรียนที่ได้รับ
                         </h2>
                         <ul className="space-y-3">
                             {wrongAnswers.map((a, i) => (
@@ -118,9 +118,9 @@ export default function SummaryPage() {
                         className="cyber-card p-6 text-center"
                     >
                         <p className="text-3xl mb-2">🏆</p>
-                        <p className="text-cyber-green font-bold">Perfect Score!</p>
+                        <p className="text-cyber-green font-bold">ได้คะแนนเต็ม 100%!</p>
                         <p className="text-cyber-muted text-sm mt-1">
-                            You identified every threat correctly. You're a true digital guardian.
+                            คุณตรวจจับภัยคุกคามได้ทุกข้อ คุณคือนักรักษาดิจิทัลตัวจริง!
                         </p>
                     </motion.div>
                 )}
@@ -137,13 +137,13 @@ export default function SummaryPage() {
                         onClick={handleReset}
                         className="cyber-btn-primary flex-1 text-base text-center"
                     >
-                        🔄 Try Again
+                        🔄 ลองอีกครั้ง
                     </button>
                     <button
                         onClick={() => navigate('/')}
                         className="cyber-btn-ghost flex-1 text-base text-center"
                     >
-                        ← Home
+                        ← หน้าหลัก
                     </button>
                 </motion.div>
             </div>

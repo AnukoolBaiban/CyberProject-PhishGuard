@@ -1,4 +1,4 @@
-import type { Choice, RedFlag } from '../types';
+import type { UiTrigger, UiTriggers, RedFlag } from '../types';
 import RedFlagHighlighter from './RedFlagHighlighter';
 
 interface Props {
@@ -7,9 +7,51 @@ interface Props {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    choices: Choice[];
-    onChoice: (label: string) => void;
+    uiTriggers: UiTriggers;
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
+}
+
+function ClickableContent({
+    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
+}: {
+    content: string;
+    redFlags: RedFlag[];
+    showRedFlags: boolean;
+    inlineLinks: UiTrigger[];
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
+    disabled: boolean;
+}) {
+    const urlRe = /(https?:\/\/[^\s]+)/g;
+    if (showRedFlags) {
+        return <RedFlagHighlighter content={content} redFlags={redFlags} showRedFlags={showRedFlags} />;
+    }
+    const parts = content.split(urlRe);
+    return (
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+            {parts.map((part, i) => {
+                if (urlRe.test(part) || part.startsWith('http')) {
+                    const failTrigger = inlineLinks.find(t => t.label === part || part.includes(t.label)) || inlineLinks[0];
+                    return (
+                        <span
+                            key={i}
+                            onClick={() => {
+                                if (disabled) return;
+                                if (failTrigger) onTrigger(failTrigger, false);
+                            }}
+                            style={{
+                                color: '#60cdff',
+                                textDecoration: 'underline',
+                                cursor: disabled ? 'default' : 'pointer',
+                                wordBreak: 'break-all',
+                            }}
+                        >{part}</span>
+                    );
+                }
+                return <span key={i}>{part}</span>;
+            })}
+        </span>
+    );
 }
 
 const FOLDERS = [
@@ -28,7 +70,7 @@ const CHOICE_STYLES: { bg: string; border: string; color: string; hoverBg: strin
 ];
 
 export default function BrowserFrame({
-    sender, subject, content, redFlags, showRedFlags, choices, onChoice, disabled,
+    sender, subject, content, redFlags, showRedFlags, uiTriggers, onTrigger, disabled,
 }: Props) {
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
@@ -91,24 +133,28 @@ export default function BrowserFrame({
                 flexShrink: 0,
             }}>
                 {[
-                    { icon: '✉️', label: 'New mail' },
-                    { icon: '↩️', label: 'Reply' },
-                    { icon: '↪️', label: 'Forward' },
-                    { icon: '🗑️', label: 'Delete' },
-                    { icon: '⚠️', label: 'Junk' },
-                    { icon: '📁', label: 'Move' },
+                    { icon: '✉️', label: 'New mail', trigger: null },
+                    { icon: '↩️', label: 'Reply', trigger: null },
+                    { icon: '↪️', label: 'Forward', trigger: null },
+                    { icon: '🗑️', label: 'Delete', trigger: uiTriggers.pass_triggers.find(t => t.type === 'delete_button') },
+                    { icon: '⚠️', label: 'Junk', trigger: uiTriggers.pass_triggers.find(t => t.type === 'report_button') },
+                    { icon: '📁', label: 'Move', trigger: null },
                 ].map((a) => (
                     <div key={a.label}
+                        onClick={() => { if (!disabled && a.trigger) onTrigger(a.trigger, true); }}
                         style={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            padding: '4px 8px', borderRadius: 4, cursor: 'default',
+                            padding: '4px 8px', borderRadius: 4, cursor: a.trigger && !disabled ? 'pointer' : 'default',
                             gap: 2, minWidth: 48,
+                            opacity: disabled && a.trigger ? 0.5 : 1,
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#3d3d3d'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={e => { if (!disabled && a.trigger) e.currentTarget.style.background = '#3d3d3d'; }}
+                        onMouseLeave={e => { if (!disabled && a.trigger) e.currentTarget.style.background = 'transparent'; }}
                     >
                         <span style={{ fontSize: 18 }}>{a.icon}</span>
-                        <span style={{ fontSize: 10, color: '#a0a0a0', fontFamily: '"Segoe UI", system-ui, sans-serif' }}>{a.label}</span>
+                        <span style={{ fontSize: 10, color: a.trigger ? '#60cdff' : '#a0a0a0', fontWeight: a.trigger ? 700 : 400, fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
+                            {a.trigger ? a.trigger.label : a.label}
+                        </span>
                     </div>
                 ))}
                 <div style={{ flex: 1 }} />
@@ -213,44 +259,7 @@ export default function BrowserFrame({
                     flex: 1, background: '#1a1a1a',
                     display: 'flex', flexDirection: 'column', overflow: 'hidden',
                 }}>
-                    {/* ── Action Bar with CHOICES as buttons ── */}
-                    <div style={{
-                        padding: '10px 20px',
-                        borderBottom: '1px solid #404040',
-                        display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0,
-                    }}>
-                        {choices.map((c, i) => {
-                            // Map style: first choice (often the dangerous one) is blue, others are neutral
-                            // But we check keywords to be sure
-                            const isDangerous = /click|link|open|visit|คลิก|ลิงก์|เปิด|โอน|กด|รับ/i.test(c.label);
-                            const style = isDangerous ? CHOICE_STYLES[0] : CHOICE_STYLES[1];
-
-                            return (
-                                <button
-                                    key={c.label}
-                                    disabled={disabled}
-                                    onClick={() => onChoice(c.label)}
-                                    style={{
-                                        padding: '6px 16px',
-                                        border: `1px solid ${style.border}`,
-                                        borderRadius: 4,
-                                        background: style.bg,
-                                        color: style.color,
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                        cursor: disabled ? 'default' : 'pointer',
-                                        fontFamily: '"Segoe UI", system-ui, sans-serif',
-                                        opacity: disabled ? 0.4 : 1,
-                                        transition: 'background 0.15s, opacity 0.15s',
-                                    }}
-                                    onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = style.hoverBg; }}
-                                    onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = style.bg; }}
-                                >
-                                    {c.label}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {/* ── Action Bar removed ── */}
 
                     {/* Email Header */}
                     <div style={{
@@ -291,8 +300,33 @@ export default function BrowserFrame({
                             color: '#d4d4d4', fontSize: 14, lineHeight: 1.7,
                             fontFamily: '"Segoe UI", system-ui, sans-serif',
                         }}>
-                            <RedFlagHighlighter content={content} redFlags={redFlags} showRedFlags={showRedFlags} />
+                            <ClickableContent
+                                content={content}
+                                redFlags={redFlags}
+                                showRedFlags={showRedFlags}
+                                inlineLinks={uiTriggers.fail_triggers.filter(t => t.type === 'inline_link')}
+                                onTrigger={onTrigger}
+                                disabled={disabled}
+                            />
                         </div>
+                        {uiTriggers.fail_triggers.filter(t => t.type === 'cta_button').map(t => (
+                            <div key={t.label} style={{ marginTop: 24, textAlign: 'center' }}>
+                                <button
+                                    disabled={disabled}
+                                    onClick={() => onTrigger(t, false)}
+                                    style={{
+                                        background: '#0078d4', border: 'none', color: '#fff',
+                                        padding: '10px 24px', fontSize: 16, borderRadius: 4,
+                                        cursor: disabled ? 'default' : 'pointer',
+                                        opacity: disabled ? 0.5 : 1,
+                                        fontFamily: '"Segoe UI", system-ui, sans-serif',
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {t.label}
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

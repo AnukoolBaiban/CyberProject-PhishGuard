@@ -3,25 +3,29 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class RedFlag(BaseModel):
-    text: str
-    reason: str
-
-
-class Choice(BaseModel):
+class UiTrigger(BaseModel):
     label: str
-    is_correct: bool
-    explanation: str
+    type: str
 
+class UiTriggers(BaseModel):
+    fail_triggers: List[UiTrigger]
+    pass_triggers: List[UiTrigger]
+
+class RedFlag(BaseModel):
+    part: str
+    desc: str
 
 class Scenario(BaseModel):
     id: str
-    type: str        # "sms" | "email"
-    sender: str
-    subject: Optional[str] = None
-    content: str
+    title: Optional[str] = None
+    category: str
+    difficulty: Optional[str] = None
+    sender_name: str
+    content_body: str
+    hint_message: Optional[str] = None
     red_flags: List[RedFlag]
-    choices: List[Choice]
+    ui_triggers: UiTriggers
+    explanation: str
 
 
 class AttemptCreate(BaseModel):

@@ -12,19 +12,19 @@ const CONFIG: Record<ImmunityLevel, { emoji: string; color: string; glowClass: s
         emoji: '🛡️',
         color: 'text-cyber-yellow',
         glowClass: 'border-cyber-yellow badge-glow-blue',
-        desc: "You're just starting your cybersecurity journey. Stay alert!",
+        desc: 'คุณเพิ่งเริ่มต้นเส้นทางไซเบอร์ซิเคียวริตี้ ฝึกต่อไปและอย่าประมาทนะ!',
     },
     Guard: {
         emoji: '⚔️',
         color: 'text-cyber-accent',
         glowClass: 'border-cyber-accent badge-glow-blue',
-        desc: "Solid cyber instincts! Most threats won't fool you.",
+        desc: 'สัญชาตญาณไซเบอร์ดีมาก! ภัยส่วนใหญ่หลอกคุณไม่ได้แล้ว',
     },
     Expert: {
         emoji: '🔰',
         color: 'text-cyber-green',
         glowClass: 'border-cyber-green badge-glow-green',
-        desc: "Elite threat awareness. You're a digital guardian!",
+        desc: 'ตรวจจับภัยคุกคามได้อย่างเชี่ยวชาญ! คุณคือนักรักษาดิจิทัลตัวจริง!',
     },
 };
 
@@ -48,7 +48,7 @@ export default function ImmunityBadge({ level, score, total }: Props) {
         >
             <span className="text-5xl mb-1" role="img" aria-label={level}>{cfg.emoji}</span>
             <span className={`font-bold text-lg font-mono ${cfg.color}`}>{level}</span>
-            <span className="text-cyber-muted text-xs mt-1 font-mono">{score}/{total} correct</span>
+            <span className="text-cyber-muted text-xs mt-1 font-mono">{score}/{total} ถูกต้อง</span>
         </motion.div>
     );
 }
