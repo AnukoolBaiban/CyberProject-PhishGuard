@@ -1,17 +1,23 @@
-"""Supabase database client singleton."""
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
 import os
-from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SUPABASE_URL: str = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY: str = os.environ.get("SUPABASE_KEY", "")
+# Placeholder for DATABASE_URL. Update this in your .env file.
+# Format: postgresql+psycopg2://user:password@host:port/dbname
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:your_password@db.your_project.supabase.co:5432/postgres")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError(
-        "Missing SUPABASE_URL or SUPABASE_KEY environment variables. "
-        "Copy .env.example to .env and fill in your credentials."
-    )
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

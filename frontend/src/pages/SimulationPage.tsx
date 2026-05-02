@@ -7,6 +7,10 @@ import BrowserFrame from '../components/BrowserFrame';
 import WebsiteFrame from '../components/WebsiteFrame';
 import ChatFrame from '../components/ChatFrame';
 import FeedbackPopup from '../components/FeedbackPopup';
+import AISSmsScenario from '../components/AISSmsScenario';
+import SafeOtpScenario from '../components/SafeOtpScenario';
+import MeaEmailScenario from '../components/MeaEmailScenario';
+import SafeCorporateEmailScenario from '../components/SafeCorporateEmailScenario';
 import type { UiTrigger } from '../types';
 
 const pageVariants = {
@@ -191,7 +195,35 @@ export default function SimulationPage() {
 
                 {/* Device Frame — fills remaining space */}
                 <div className={`flex-1 flex overflow-hidden ${currentScenario.category === 'SMS' || currentScenario.category === 'CHAT' ? 'justify-center' : 'w-full'}`} style={{ minHeight: 0 }}>
-                    {currentScenario.category === 'SMS' ? (
+                    {currentIndex === 0 && currentScenario.sender_name === 'AIS' && currentScenario.category === 'SMS' ? (
+                        <AISSmsScenario 
+                            onAction={async (label, isCorrect) => {
+                                await submitTrigger(nickname, label, isCorrect);
+                                nextScenario();
+                            }}
+                        />
+                    ) : currentIndex === 1 && currentScenario.sender_name === 'KBank' && currentScenario.category === 'SMS' ? (
+                        <SafeOtpScenario 
+                            onAction={async (label, isCorrect) => {
+                                await submitTrigger(nickname, label, isCorrect);
+                                nextScenario();
+                            }}
+                        />
+                    ) : currentIndex === 2 && currentScenario.sender_name.includes('MEA') && currentScenario.category === 'EMAIL' ? (
+                        <MeaEmailScenario 
+                            onAction={async (label, isCorrect) => {
+                                await submitTrigger(nickname, label, isCorrect);
+                                nextScenario();
+                            }}
+                        />
+                    ) : currentIndex === 3 && currentScenario.sender_name.includes('Google') && currentScenario.category === 'EMAIL' ? (
+                        <SafeCorporateEmailScenario 
+                            onAction={async (label, isCorrect) => {
+                                await submitTrigger(nickname, label, isCorrect);
+                                nextScenario();
+                            }}
+                        />
+                    ) : currentScenario.category === 'SMS' ? (
                         <PhoneFrame
                             sender={currentScenario.sender_name}
                             content={currentScenario.content_body}

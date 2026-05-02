@@ -12,16 +12,18 @@ interface Props {
     disabled: boolean;
 }
 
-function ClickableContent({
-    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
-}: {
+interface ClickableContentProps {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    inlineLinks: UiTrigger[];
+    inlineLinks: (UiTrigger & { isPass: boolean })[];
     onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
-}) {
+}
+
+function ClickableContent({
+    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
+}: ClickableContentProps) {
     const urlRe = /(https?:\/\/[^\s]+)/g;
     if (showRedFlags) {
         return <RedFlagHighlighter content={content} redFlags={redFlags} showRedFlags={showRedFlags} />;
@@ -31,18 +33,18 @@ function ClickableContent({
         <span style={{ whiteSpace: 'pre-wrap' }}>
             {parts.map((part, i) => {
                 if (urlRe.test(part) || part.startsWith('http')) {
-                    const failTrigger = inlineLinks.find(t => t.label === part || part.includes(t.label)) || inlineLinks[0];
+                    const trigger = inlineLinks.find(t => t.label === part || part.includes(t.label));
                     return (
                         <span
                             key={i}
                             onClick={() => {
-                                if (disabled) return;
-                                if (failTrigger) onTrigger(failTrigger, false);
+                                if (disabled || !trigger) return;
+                                onTrigger(trigger, trigger.isPass);
                             }}
                             style={{
                                 color: '#60cdff',
                                 textDecoration: 'underline',
-                                cursor: disabled ? 'default' : 'pointer',
+                                cursor: (disabled || !trigger) ? 'default' : 'pointer',
                                 wordBreak: 'break-all',
                             }}
                         >{part}</span>
@@ -356,7 +358,10 @@ export default function WebsiteFrame({
                                     content={content}
                                     redFlags={redFlags}
                                     showRedFlags={showRedFlags}
-                                    inlineLinks={uiTriggers.fail_triggers.filter(t => t.type === 'inline_link')}
+                                    inlineLinks={[
+                                        ...uiTriggers.fail_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: false })),
+                                        ...uiTriggers.pass_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: true })),
+                                    ]}
                                     onTrigger={onTrigger}
                                     disabled={disabled}
                                 />

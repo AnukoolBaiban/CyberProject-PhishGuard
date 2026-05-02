@@ -73,11 +73,11 @@ export function useSimulation(): UseSimulationReturn {
 
             // Fire-and-forget to backend (don't block UI)
             postAttempt({
-                nickname,
+                user_nickname: nickname,
                 scenario_id: scenario.id,
-                choice_label: triggerLabel,
                 is_correct: isCorrect,
-                score: newScore,
+                score_points: newScore,
+                choice_label: triggerLabel,
             }).catch(console.error);
 
             return isCorrect;

@@ -29,11 +29,11 @@ export interface Scenario {
 }
 
 export interface AttemptCreate {
-    nickname: string;
+    user_nickname: string;
     scenario_id: string;
-    choice_label: string;
     is_correct: boolean;
-    score: number;
+    score_points: number;
+    choice_label?: string;
 }
 
 export interface Answer {

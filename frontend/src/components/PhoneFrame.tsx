@@ -33,16 +33,18 @@ function BatteryIcon() {
 
 // ── Inline-clickable content renderer ─────────────────────────────────────────
 // Turns URLs in the message into tappable blue links that trigger a choice
-function ClickableContent({
-    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
-}: {
+interface ClickableContentProps {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    inlineLinks: UiTrigger[];
+    inlineLinks: (UiTrigger & { isPass: boolean })[];
     onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
-}) {
+}
+
+function ClickableContent({
+    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
+}: ClickableContentProps) {
     // URL regex
     const urlRe = /(https?:\/\/[^\s]+)/g;
 
@@ -57,18 +59,18 @@ function ClickableContent({
         <span style={{ whiteSpace: 'pre-wrap' }}>
             {parts.map((part, i) => {
                 if (urlRe.test(part) || part.startsWith('http')) {
+                    const trigger = inlineLinks.find(t => t.label === part || part.includes(t.label));
                     return (
                         <span
                             key={i}
                             onClick={() => {
-                                if (disabled) return;
-                                const failTrigger = inlineLinks.find(t => t.label === part || part.includes(t.label)) || inlineLinks[0];
-                                if (failTrigger) onTrigger(failTrigger, false);
+                                if (disabled || !trigger) return;
+                                onTrigger(trigger, trigger.isPass);
                             }}
                             style={{
                                 color: '#007aff',
                                 textDecoration: 'underline',
-                                cursor: disabled ? 'default' : 'pointer',
+                                cursor: (disabled || !trigger) ? 'default' : 'pointer',
                                 wordBreak: 'break-all',
                             }}
                         >{part}</span>
@@ -96,7 +98,10 @@ export default function PhoneFrame({
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const displayName = sender.length > 22 ? sender.slice(0, 20) + '…' : sender;
 
-    const inlineLinks = uiTriggers.fail_triggers.filter(t => t.type === 'inline_link');
+    const allInlineLinks = [
+        ...uiTriggers.fail_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: false })),
+        ...uiTriggers.pass_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: true })),
+    ];
     const backTrigger = uiTriggers.pass_triggers.find(t => t.type === 'back_button');
 
     return (
@@ -260,7 +265,7 @@ export default function PhoneFrame({
                                     content={content}
                                     redFlags={redFlags}
                                     showRedFlags={showRedFlags}
-                                    inlineLinks={inlineLinks}
+                                    inlineLinks={allInlineLinks}
                                     onTrigger={onTrigger}
                                     disabled={disabled}
                                 />

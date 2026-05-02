@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import HomePage from './pages/HomePage';
 import SimulationPage from './pages/SimulationPage';
 import SummaryPage from './pages/SummaryPage';
+import AISSmsScenario from './components/AISSmsScenario';
 
 function AnimatedRoutes() {
     const location = useLocation();
@@ -12,6 +13,7 @@ function AnimatedRoutes() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/simulation" element={<SimulationPage />} />
                 <Route path="/summary" element={<SummaryPage />} />
+                <Route path="/sandbox/ais" element={<AISSmsScenario />} />
             </Routes>
         </AnimatePresence>
     );
