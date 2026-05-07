@@ -14,11 +14,84 @@ interface Props {
     onAction?: (label: string, isCorrect: boolean) => void;
 }
 
+// ── Module-level shell (stable identity across renders) ───────────────────────
+interface PhoneShellProps {
+    children: React.ReactNode;
+    bg?: string;
+    popup: Popup | null;
+    onClose: () => void;
+}
+
+const PhoneShell: React.FC<PhoneShellProps> = ({ children, bg = 'bg-white', popup, onClose }) => (
+    <div className="w-full h-full flex items-center justify-center py-4">
+        <div className={`relative w-full max-w-[390px] h-full max-h-[844px] ${bg} rounded-[55px] shadow-2xl border-[8px] border-slate-800 overflow-hidden flex flex-col`}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-800 rounded-b-3xl z-50" />
+            <div className="h-12 flex items-end justify-between px-8 pb-1 flex-shrink-0">
+                <span className="text-[15px] font-semibold">9:41</span>
+                <div className="flex gap-1.5 items-center">
+                    <div className="w-4 h-4 rounded-sm border border-current opacity-50" />
+                    <div className="w-4 h-4 rounded-sm border border-current opacity-50" />
+                    <div className="w-6 h-3 rounded-sm border border-current opacity-50" />
+                </div>
+            </div>
+            {children}
+            <div className="h-8 flex justify-center items-center flex-shrink-0">
+                <div className="w-32 h-1.5 bg-black/20 rounded-full" />
+            </div>
+        </div>
+        {popup && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+                <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
+                    <div className={`p-6 text-center ${
+                        popup.type === 'success' ? 'bg-green-50' :
+                        popup.type === 'fail'    ? 'bg-red-50'   : 'bg-orange-50'
+                    }`}>
+                        <div className="text-4xl mb-3">
+                            {popup.type === 'success' ? '✅' : popup.type === 'fail' ? '🚨' : '⚠️'}
+                        </div>
+                        <h3 className={`text-xl font-bold mb-2 ${
+                            popup.type === 'success' ? 'text-green-700' :
+                            popup.type === 'fail'    ? 'text-red-700'   : 'text-orange-700'
+                        }`}>{popup.title}</h3>
+                        <p className="text-slate-600 leading-relaxed">{popup.message}</p>
+                    </div>
+                    <button onClick={onClose} className="w-full py-4 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 transition-colors">ตกลง</button>
+                </div>
+            </div>
+        )}
+    </div>
+);
+
 export default function AISSmsScenario({ onAction }: Props) {
     const [currentScreen, setCurrentScreen] = useState<Screen>('INBOX');
     const [popup, setPopup] = useState<Popup | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    // Fake browser form state
+    const [phone, setPhone] = useState('');
+    const [shake, setShake] = useState(false);
+
+    const formatPhone = (raw: string) => {
+        const digits = raw.replace(/\D/g, '').slice(0, 10);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+        return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    };
+
+    const handleAisSubmit = () => {
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 10) {
+            setShake(true);
+            setTimeout(() => setShake(false), 600);
+            return;
+        }
+        showPopup(
+            'เสร็จโจร!',
+            `🚨 คุณกรอกเบอร์ ${phone} ลงในเว็บไซต์ปลอมเรียบร้อยแล้ว มิจฉาชีพได้เบอร์ของคุณไป! สังเกตที่ URL: เว็บจริงของ AIS คือ ais.th ไม่ใช่ ais-redeem-point.com`,
+            'fail',
+            true,
+        );
+    };
 
     const closePopup = () => {
         if (popup?.isFinal && onAction) {
@@ -31,64 +104,8 @@ export default function AISSmsScenario({ onAction }: Props) {
         setPopup({ title, message, type, isFinal });
     };
 
-    // ── Helper: Screen Shell ───────────────────────────────────────────────────
-    const PhoneShell = ({ children, bg = 'bg-white' }: { children: React.ReactNode; bg?: string }) => (
-        <div className="w-full h-full flex items-center justify-center py-4">
-            <div className={`relative w-full max-w-[390px] h-full max-h-[844px] ${bg} rounded-[55px] shadow-2xl border-[8px] border-slate-800 overflow-hidden flex flex-col`}>
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-800 rounded-b-3xl z-50"></div>
-                
-                {/* Status Bar */}
-                <div className="h-12 flex items-end justify-between px-8 pb-1 flex-shrink-0">
-                    <span className="text-[15px] font-semibold">9:41</span>
-                    <div className="flex gap-1.5 items-center">
-                        <div className="w-4 h-4 rounded-sm border border-current opacity-50"></div>
-                        <div className="w-4 h-4 rounded-sm border border-current opacity-50"></div>
-                        <div className="w-6 h-3 rounded-sm border border-current opacity-50"></div>
-                    </div>
-                </div>
 
-                {children}
-
-                {/* Home Indicator */}
-                <div className="h-8 flex justify-center items-center flex-shrink-0">
-                    <div className="w-32 h-1.5 bg-black/20 rounded-full"></div>
-                </div>
-            </div>
-
-            {/* Popup Modal */}
-            {popup && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className={`p-6 text-center ${
-                            popup.type === 'success' ? 'bg-green-50' : 
-                            popup.type === 'fail' ? 'bg-red-50' : 'bg-orange-50'
-                        }`}>
-                            <div className="text-4xl mb-3">
-                                {popup.type === 'success' ? '✅' : popup.type === 'fail' ? '🚨' : '⚠️'}
-                            </div>
-                            <h3 className={`text-xl font-bold mb-2 ${
-                                popup.type === 'success' ? 'text-green-700' : 
-                                popup.type === 'fail' ? 'text-red-700' : 'text-orange-700'
-                            }`}>
-                                {popup.title}
-                            </h3>
-                            <p className="text-slate-600 leading-relaxed">
-                                {popup.message}
-                            </p>
-                        </div>
-                        <button 
-                            onClick={closePopup}
-                            className="w-full py-4 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 transition-colors"
-                        >
-                            ตกลง
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
+    // ── Screen: Inbox ───────────────────────────────────────────────────
     // ── Screen: Inbox ──────────────────────────────────────────────────────────
     if (currentScreen === 'INBOX') {
         const toggleEdit = () => {
@@ -103,7 +120,7 @@ export default function AISSmsScenario({ onAction }: Props) {
         };
 
         return (
-            <PhoneShell bg="bg-[#F2F2F7]">
+            <PhoneShell bg="bg-[#F2F2F7]" popup={popup} onClose={closePopup}>
                 <div className="px-4 py-2 border-b border-slate-200 bg-white/80 backdrop-blur-md flex justify-between items-center flex-shrink-0 z-10">
                     <button 
                         onClick={toggleEdit}
@@ -185,7 +202,7 @@ export default function AISSmsScenario({ onAction }: Props) {
     // ── Screen: SMS Detail ─────────────────────────────────────────────────────
     if (currentScreen === 'SMS_DETAIL') {
         return (
-            <PhoneShell bg="bg-white">
+            <PhoneShell bg="bg-white" popup={popup} onClose={closePopup}>
                 {/* iOS Message Header */}
                 <div className="bg-[#F2F2F7] border-b border-slate-300 px-4 pt-2 pb-3">
                     <div className="flex items-center mb-2">
@@ -298,21 +315,41 @@ export default function AISSmsScenario({ onAction }: Props) {
                         <div className="w-full space-y-4 mt-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">เบอร์โทรศัพท์</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="08X-XXX-XXXX" 
-                                    className="w-full p-4 rounded-xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#93D500]"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="tel"
+                                        inputMode="numeric"
+                                        value={phone}
+                                        onChange={e => setPhone(formatPhone(e.target.value))}
+                                        placeholder="08X-XXX-XXXX"
+                                        maxLength={12}
+                                        className={`w-full p-4 rounded-xl border-2 bg-white shadow-sm outline-none font-mono tracking-widest transition-colors ${
+                                            phone.replace(/\D/g,'').length === 10
+                                                ? 'border-[#93D500] focus:ring-2 focus:ring-[#93D500]'
+                                                : phone.length > 0
+                                                ? 'border-orange-400'
+                                                : 'border-slate-200 focus:ring-2 focus:ring-[#93D500]'
+                                        }`}
+                                    />
+                                    {phone.length > 0 && (
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold">
+                                            {phone.replace(/\D/g,'').length}/10
+                                        </span>
+                                    )}
+                                </div>
+                                {phone.length > 0 && phone.replace(/\D/g,'').length < 10 && (
+                                    <p className="text-orange-500 text-xs ml-1">⚠ กรอกเบอร์ให้ครบ 10 หลัก</p>
+                                )}
                             </div>
                             
-                            <button 
-                                onClick={() => showPopup(
-                                    "เสร็จโจร!", 
-                                    "🚨 คุณกรอกข้อมูลลงในเว็บไซต์ปลอมเรียบร้อยแล้ว สังเกตที่ URL ให้ดี เว็บไซต์จริงต้องเป็น ais.th เท่านั้น", 
-                                    "fail",
-                                    true
-                                )}
-                                className="w-full py-4 bg-[#93D500] text-white font-bold rounded-xl shadow-lg hover:bg-[#82bd00] transition-all transform active:scale-95"
+                            <button
+                                onClick={handleAisSubmit}
+                                style={shake ? { animation: 'shake 0.5s' } : {}}
+                                className={`w-full py-4 font-bold rounded-xl shadow-lg transition-all transform active:scale-95 ${
+                                    phone.replace(/\D/g,'').length === 10
+                                        ? 'bg-[#93D500] text-white hover:bg-[#82bd00]'
+                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                }`}
                             >
                                 Redeem Points
                             </button>
@@ -324,6 +361,7 @@ export default function AISSmsScenario({ onAction }: Props) {
                         </div>
                     </div>
                 </div>
+                <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}`}</style>
             </PhoneShell>
         );
     }

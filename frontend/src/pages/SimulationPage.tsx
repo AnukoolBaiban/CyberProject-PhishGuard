@@ -5,10 +5,14 @@ import { useSimulation } from '../hooks/useSimulation';
 import PhoneFrame from '../components/PhoneFrame';
 import BrowserFrame from '../components/BrowserFrame';
 import WebsiteFrame from '../components/WebsiteFrame';
+import FakeNetflixWebsiteScenario from '../components/FakeNetflixWebsiteScenario';
 import ChatFrame from '../components/ChatFrame';
+import FakeLineChatScenario from '../components/FakeLineChatScenario';
+import SafeLineChatScenario from '../components/SafeLineChatScenario';
 import FeedbackPopup from '../components/FeedbackPopup';
 import AISSmsScenario from '../components/AISSmsScenario';
 import SafeOtpScenario from '../components/SafeOtpScenario';
+import SafeDtacSmsScenario from '../components/SafeDtacSmsScenario';
 import MeaEmailScenario from '../components/MeaEmailScenario';
 import SafeCorporateEmailScenario from '../components/SafeCorporateEmailScenario';
 import type { UiTrigger } from '../types';
@@ -195,15 +199,22 @@ export default function SimulationPage() {
 
                 {/* Device Frame — fills remaining space */}
                 <div className={`flex-1 flex overflow-hidden ${currentScenario.category === 'SMS' || currentScenario.category === 'CHAT' ? 'justify-center' : 'w-full'}`} style={{ minHeight: 0 }}>
-                    {currentIndex === 0 && currentScenario.sender_name === 'AIS' && currentScenario.category === 'SMS' ? (
-                        <AISSmsScenario 
+                    {currentScenario.ui_triggers?.component === 'AISSmsScenario' || (currentIndex === 0 && currentScenario.sender_name === 'AIS' && currentScenario.category === 'SMS') ? (
+                        <AISSmsScenario
                             onAction={async (label, isCorrect) => {
                                 await submitTrigger(nickname, label, isCorrect);
                                 nextScenario();
                             }}
                         />
-                    ) : currentIndex === 1 && currentScenario.sender_name === 'KBank' && currentScenario.category === 'SMS' ? (
-                        <SafeOtpScenario 
+                    ) : currentScenario.ui_triggers?.component === 'SafeOtpScenario' || (currentIndex === 1 && currentScenario.sender_name === 'KBank' && currentScenario.category === 'SMS') ? (
+                        <SafeOtpScenario
+                            onAction={async (label, isCorrect) => {
+                                await submitTrigger(nickname, label, isCorrect);
+                                nextScenario();
+                            }}
+                        />
+                    ) : currentScenario.ui_triggers?.component === 'SafeDtacSmsScenario' ? (
+                        <SafeDtacSmsScenario
                             onAction={async (label, isCorrect) => {
                                 await submitTrigger(nickname, label, isCorrect);
                                 nextScenario();
@@ -234,26 +245,52 @@ export default function SimulationPage() {
                             disabled={choiceDisabled}
                         />
                     ) : currentScenario.category === 'WEBSITE' ? (
-                        <WebsiteFrame
-                            sender={currentScenario.sender_name}
-                            subject={currentScenario.title}
-                            content={currentScenario.content_body}
-                            redFlags={currentScenario.red_flags}
-                            showRedFlags={showRedFlags}
-                            uiTriggers={currentScenario.ui_triggers}
-                            onTrigger={handleTrigger}
-                            disabled={choiceDisabled}
-                        />
+                        // Route to the correct website component based on ui_triggers.component
+                        currentScenario.ui_triggers?.component === 'FakeNetflixWebsiteScenario' ? (
+                            <FakeNetflixWebsiteScenario
+                                onAction={async (label, isCorrect) => {
+                                    await submitTrigger(nickname, label, isCorrect);
+                                    nextScenario();
+                                }}
+                            />
+                        ) : (
+                            <WebsiteFrame
+                                sender={currentScenario.sender_name}
+                                subject={currentScenario.title}
+                                content={currentScenario.content_body}
+                                redFlags={currentScenario.red_flags}
+                                showRedFlags={showRedFlags}
+                                uiTriggers={currentScenario.ui_triggers}
+                                onTrigger={handleTrigger}
+                                disabled={choiceDisabled}
+                            />
+                        )
                     ) : currentScenario.category === 'CHAT' ? (
-                        <ChatFrame
-                            sender={currentScenario.sender_name}
-                            content={currentScenario.content_body}
-                            redFlags={currentScenario.red_flags}
-                            showRedFlags={showRedFlags}
-                            uiTriggers={currentScenario.ui_triggers}
-                            onTrigger={handleTrigger}
-                            disabled={choiceDisabled}
-                        />
+                        currentScenario.ui_triggers?.component === 'FakeLineChatScenario' ? (
+                            <FakeLineChatScenario
+                                onAction={async (label, isCorrect) => {
+                                    await submitTrigger(nickname, label, isCorrect);
+                                    nextScenario();
+                                }}
+                            />
+                        ) : currentScenario.ui_triggers?.component === 'SafeLineChatScenario' ? (
+                            <SafeLineChatScenario
+                                onAction={async (label, isCorrect) => {
+                                    await submitTrigger(nickname, label, isCorrect);
+                                    nextScenario();
+                                }}
+                            />
+                        ) : (
+                            <ChatFrame
+                                sender={currentScenario.sender_name}
+                                content={currentScenario.content_body}
+                                redFlags={currentScenario.red_flags}
+                                showRedFlags={showRedFlags}
+                                uiTriggers={currentScenario.ui_triggers}
+                                onTrigger={handleTrigger}
+                                disabled={choiceDisabled}
+                            />
+                        )
                     ) : (
                         <BrowserFrame
                             sender={currentScenario.sender_name}

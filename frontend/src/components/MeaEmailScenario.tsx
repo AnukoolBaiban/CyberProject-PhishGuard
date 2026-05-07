@@ -14,9 +14,135 @@ interface Props {
     onAction?: (label: string, isCorrect: boolean) => void;
 }
 
+// ── Module-level shell ────────────────────────────────────────────────────────────
+interface BrowserShellProps {
+    children: React.ReactNode;
+    url: string;
+    popup: Popup | null;
+    onClose: () => void;
+    currentScreen: string;
+}
+
+const BrowserShell: React.FC<BrowserShellProps> = ({ children, url, popup, onClose, currentScreen }) => (
+    <div className="w-full h-full flex flex-col bg-[#f0f3f4] overflow-hidden font-sans">
+        {/* Windows Browser Header (Chrome Style) */}
+        <div className="bg-[#dee1e6] h-9 flex items-center justify-between px-2 flex-shrink-0">
+            <div className="flex items-end h-full">
+                <div className="bg-white h-8 px-4 rounded-t-lg text-[11px] flex items-center gap-2 min-w-[180px] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+                    <span className="text-[#ea4335]">✉️</span>
+                    <span className="truncate max-w-[140px] text-gray-700">
+                        {currentScreen === 'FAKE_PAYMENT_PAGE' ? 'MEA E-Payment Gateway' : 'Gmail - Inbox'}
+                    </span>
+                    <span className="ml-auto text-[10px] opacity-40">×</span>
+                </div>
+                <div className="px-3 py-2 text-gray-500 text-xs hover:bg-gray-300 rounded-t-md cursor-default">+</div>
+            </div>
+            <div className="flex items-center gap-4 pr-2 text-gray-600">
+                <span className="text-lg leading-none hover:bg-gray-300 w-8 h-8 flex items-center justify-center rounded">−</span>
+                <span className="text-sm leading-none hover:bg-gray-300 w-8 h-8 flex items-center justify-center rounded">▢</span>
+                <span className="text-lg leading-none hover:bg-red-500 hover:text-white w-8 h-8 flex items-center justify-center rounded">×</span>
+            </div>
+        </div>
+        
+        {/* Address Bar Area */}
+        <div className="bg-white h-11 border-b border-gray-300 flex items-center px-4 gap-3 flex-shrink-0">
+            <div className="flex gap-3 text-gray-500 text-lg">
+                <span className="cursor-default opacity-40">←</span>
+                <span className="cursor-default opacity-40">→</span>
+                <span className="cursor-default hover:text-gray-800">↻</span>
+            </div>
+            <div className="flex-1 bg-[#f1f3f4] h-7 rounded-full flex items-center px-4 gap-2 border border-transparent focus-within:bg-white focus-within:shadow-[0_0_0_2px_#8ab4f8] transition-all">
+                <span className="text-[10px] opacity-60">🔒</span>
+                <span className="text-xs text-gray-700 truncate select-none">{url}</span>
+            </div>
+            <div className="flex gap-2 text-gray-500">
+                <span className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full cursor-default">🧩</span>
+                <span className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full cursor-default text-xl">⋮</span>
+            </div>
+        </div>
+
+        {/* Browser Content */}
+        <div className="flex-1 overflow-hidden relative">
+            {children}
+        </div>
+
+        {/* Popup Modal */}
+        {popup && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-200">
+                    <div className={`p-8 text-center ${
+                        popup.type === 'success' ? 'bg-green-50/50' : 
+                        popup.type === 'fail' ? 'bg-red-50/50' : 'bg-blue-50/50'
+                    }`}>
+                        <div className="text-5xl mb-4 transform scale-110">
+                            {popup.type === 'success' ? '✅' : popup.type === 'fail' ? '🚨' : '🛡️'}
+                        </div>
+                        <h3 className={`text-2xl font-black mb-3 tracking-tight ${
+                            popup.type === 'success' ? 'text-green-700' : 
+                            popup.type === 'fail' ? 'text-red-700' : 'text-blue-700'
+                        }`}>
+                            {popup.title}
+                        </h3>
+                        <p className="text-gray-600 text-lg leading-snug font-medium">
+                            {popup.message}
+                        </p>
+                    </div>
+                    <div className="p-4 bg-gray-50 border-t border-gray-100">
+                        <button 
+                            onClick={onClose}
+                            className="w-full py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg transition-all text-lg shadow-md active:scale-95"
+                        >
+                            เข้าใจแล้ว
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+);
+
 export default function MeaEmailScenario({ onAction }: Props) {
     const [currentScreen, setCurrentScreen] = useState<Screen>('GMAIL_INBOX');
     const [popup, setPopup] = useState<Popup | null>(null);
+    // Payment form state
+    const [nameOnCard, setNameOnCard] = useState('');
+    const [cardNum, setCardNum] = useState('');
+    const [expiry, setExpiry] = useState('');
+    const [cvv, setCvv] = useState('');
+    const [otp, setOtp] = useState('');
+    const [shake, setShake] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const fmtCard = (raw: string) => raw.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim();
+    const fmtExp  = (raw: string) => {
+        const d = raw.replace(/\D/g,'').slice(0,4);
+        return d.length <= 2 ? d : `${d.slice(0,2)} / ${d.slice(2)}`;
+    };
+    const cardBrand = (n: string) => {
+        const d = n.replace(/\s/g,'');
+        if (d.startsWith('4')) return 'VISA';
+        if (/^5[1-5]/.test(d)) return '💳 MC';
+        if (d.startsWith('3')) return 'AMEX';
+        return '💳';
+    };
+    const cardDigits = cardNum.replace(/\s/g,'').length;
+    const expiryDigits = expiry.replace(/\D/g,'').length;
+    const allValid = nameOnCard.trim().length >= 2 && cardDigits === 16 && expiryDigits === 4 && cvv.length >= 3 && otp.replace(/\D/g,'').length >= 4;
+
+    const handleMeaSubmit = () => {
+        setSubmitted(true);
+        if (!allValid) {
+            setShake(true);
+            setTimeout(() => setShake(false), 600);
+            return;
+        }
+        showPopup(
+            'เสร็จโจร! 🚨',
+            `คุณกรอกข้อมูลบัตรหมายเลข ${cardNum} ลงในลิงก์ปลอม! มิจฉาชีพได้ข้อมูลของคุณไปแล้ว จำไว้ว่า MEA ไม่มีนโยบายส่งอีเมลขู่ตัดไฟพร้อมลิงก์กรอกข้อมูลบัตรแบบนี้ ตรวจสอบผ่านแอป MEA Smart Life หรือเบอร์ 1130 เท่านั้น!`,
+            'fail',
+            true,
+        );
+    };
 
     const closePopup = () => {
         if (popup?.isFinal && onAction) {
@@ -38,89 +164,11 @@ export default function MeaEmailScenario({ onAction }: Props) {
         </svg>
     );
 
-    // ── Helper: Browser Shell ──────────────────────────────────────────────────
-    const BrowserShell = ({ children, url }: { children: React.ReactNode; url: string }) => (
-        <div className="w-full h-full flex flex-col bg-[#f0f3f4] overflow-hidden font-sans">
-            {/* Windows Browser Header (Chrome Style) */}
-            <div className="bg-[#dee1e6] h-9 flex items-center justify-between px-2 flex-shrink-0">
-                <div className="flex items-end h-full">
-                    <div className="bg-white h-8 px-4 rounded-t-lg text-[11px] flex items-center gap-2 min-w-[180px] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
-                        <span className="text-[#ea4335]">✉️</span>
-                        <span className="truncate max-w-[140px] text-gray-700">
-                            {currentScreen === 'FAKE_PAYMENT_PAGE' ? 'MEA E-Payment Gateway' : 'Gmail - Inbox'}
-                        </span>
-                        <span className="ml-auto text-[10px] opacity-40">×</span>
-                    </div>
-                    <div className="px-3 py-2 text-gray-500 text-xs hover:bg-gray-300 rounded-t-md cursor-default">+</div>
-                </div>
-                <div className="flex items-center gap-4 pr-2 text-gray-600">
-                    <span className="text-lg leading-none hover:bg-gray-300 w-8 h-8 flex items-center justify-center rounded">−</span>
-                    <span className="text-sm leading-none hover:bg-gray-300 w-8 h-8 flex items-center justify-center rounded">▢</span>
-                    <span className="text-lg leading-none hover:bg-red-500 hover:text-white w-8 h-8 flex items-center justify-center rounded">×</span>
-                </div>
-            </div>
-            
-            {/* Address Bar Area */}
-            <div className="bg-white h-11 border-b border-gray-300 flex items-center px-4 gap-3 flex-shrink-0">
-                <div className="flex gap-3 text-gray-500 text-lg">
-                    <span className="cursor-default opacity-40">←</span>
-                    <span className="cursor-default opacity-40">→</span>
-                    <span className="cursor-default hover:text-gray-800">↻</span>
-                </div>
-                <div className="flex-1 bg-[#f1f3f4] h-7 rounded-full flex items-center px-4 gap-2 border border-transparent focus-within:bg-white focus-within:shadow-[0_0_0_2px_#8ab4f8] transition-all">
-                    <span className="text-[10px] opacity-60">🔒</span>
-                    <span className="text-xs text-gray-700 truncate select-none">{url}</span>
-                </div>
-                <div className="flex gap-2 text-gray-500">
-                    <span className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full cursor-default">🧩</span>
-                    <span className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full cursor-default text-xl">⋮</span>
-                </div>
-            </div>
-
-            {/* Browser Content */}
-            <div className="flex-1 overflow-hidden relative">
-                {children}
-            </div>
-
-            {/* Popup Modal */}
-            {popup && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-200">
-                        <div className={`p-8 text-center ${
-                            popup.type === 'success' ? 'bg-green-50/50' : 
-                            popup.type === 'fail' ? 'bg-red-50/50' : 'bg-blue-50/50'
-                        }`}>
-                            <div className="text-5xl mb-4 transform scale-110">
-                                {popup.type === 'success' ? '✅' : popup.type === 'fail' ? '🚨' : '🛡️'}
-                            </div>
-                            <h3 className={`text-2xl font-black mb-3 tracking-tight ${
-                                popup.type === 'success' ? 'text-green-700' : 
-                                popup.type === 'fail' ? 'text-red-700' : 'text-blue-700'
-                            }`}>
-                                {popup.title}
-                            </h3>
-                            <p className="text-gray-600 text-lg leading-snug font-medium">
-                                {popup.message}
-                            </p>
-                        </div>
-                        <div className="p-4 bg-gray-50 border-t border-gray-100">
-                            <button 
-                                onClick={closePopup}
-                                className="w-full py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg transition-all text-lg shadow-md active:scale-95"
-                            >
-                                เข้าใจแล้ว
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
 
     // ── Screen: Gmail Inbox ────────────────────────────────────────────────────
     if (currentScreen === 'GMAIL_INBOX') {
         return (
-            <BrowserShell url="https://mail.google.com/mail/u/0/#inbox">
+            <BrowserShell url="https://mail.google.com/mail/u/0/#inbox" popup={popup} onClose={closePopup} currentScreen={currentScreen}>
                 <div className="h-full flex flex-col bg-white">
                     {/* Gmail Header */}
                     <div className="h-16 border-b border-gray-100 flex items-center px-4 gap-4 flex-shrink-0">
@@ -344,7 +392,7 @@ export default function MeaEmailScenario({ onAction }: Props) {
 
     // ── Screen: Fake Payment Page ──────────────────────────────────────────────
     return (
-        <BrowserShell url="https://mea-epayment-portal.net/checkout/secure/0200041532">
+        <BrowserShell url="https://mea-epayment-portal.net/checkout/secure/0200041532" popup={popup} onClose={closePopup} currentScreen={currentScreen}>
             <div className="absolute inset-0 bg-white flex flex-col items-center pt-8 overflow-y-auto pb-24 px-4 scroll-smooth">
                 {/* Site Branding */}
                 <div className="flex flex-col items-center mb-8 transform scale-100">
@@ -366,53 +414,130 @@ export default function MeaEmailScenario({ onAction }: Props) {
                     </div>
                     
                     <div className="p-8 space-y-6">
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
+                        <div className="space-y-4" style={shake ? { animation: 'shake 0.5s' } : {}}>
+                            {/* Name on card */}
+                            <div className="space-y-1">
                                 <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">ชื่อบนหน้าบัตร</label>
-                                <input type="text" placeholder="FULL NAME ON CARD" className="w-full p-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6A2B86] outline-none text-sm font-bold uppercase placeholder:font-normal placeholder:text-gray-300" />
+                                <input
+                                    type="text"
+                                    value={nameOnCard}
+                                    onChange={e => setNameOnCard(e.target.value.toUpperCase())}
+                                    placeholder="FULL NAME ON CARD"
+                                    className={`w-full p-3.5 border-2 rounded-lg outline-none text-sm font-bold uppercase placeholder:font-normal placeholder:text-gray-300 transition-colors ${
+                                        submitted && nameOnCard.trim().length < 2 ? 'border-red-400 bg-red-50' :
+                                        nameOnCard.trim().length >= 2 ? 'border-green-400 focus:ring-2 focus:ring-green-300' :
+                                        'border-gray-300 focus:ring-2 focus:ring-[#6A2B86]'
+                                    }`}
+                                />
+                                {submitted && nameOnCard.trim().length < 2 && (
+                                    <p className="text-red-500 text-xs">⚠ กรุณากรอกชื่อบนบัตรอย่างน้อย 2 ตัวอักษร</p>
+                                )}
                             </div>
-                            <div className="space-y-1.5 relative">
+
+                            {/* Card number */}
+                            <div className="space-y-1">
                                 <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">หมายเลขบัตรเครดิต/เดบิต</label>
                                 <div className="relative">
-                                    <input type="text" placeholder="XXXX-XXXX-XXXX-XXXX" className="w-full p-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6A2B86] outline-none text-sm font-bold tracking-[2px]" />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 opacity-50 grayscale scale-75">
-                                        <div className="w-8 h-5 bg-[#eb001b] rounded-sm"></div>
-                                        <div className="w-8 h-5 bg-[#005aff] rounded-sm"></div>
-                                    </div>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={cardNum}
+                                        onChange={e => setCardNum(fmtCard(e.target.value))}
+                                        placeholder="0000 0000 0000 0000"
+                                        maxLength={19}
+                                        className={`w-full p-3.5 border-2 rounded-lg outline-none text-sm font-mono tracking-[2px] pr-16 transition-colors ${
+                                            submitted && cardDigits !== 16 ? 'border-red-400 bg-red-50' :
+                                            cardDigits === 16 ? 'border-green-400' :
+                                            'border-gray-300 focus:ring-2 focus:ring-[#6A2B86]'
+                                        }`}
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                                        {cardNum ? cardBrand(cardNum) : '💳'}
+                                    </span>
                                 </div>
+                                {submitted && cardDigits !== 16 && (
+                                    <p className="text-red-500 text-xs">⚠ กรอกตัวเลขบัตรให้ครบ 16 หลัก ({cardDigits}/16)</p>
+                                )}
                             </div>
+
+                            {/* Expiry + CVV */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">วันหมดอายุ (MM/YY)</label>
-                                    <input type="text" placeholder="MM / YY" className="w-full p-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6A2B86] outline-none text-sm text-center font-bold" />
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">วันหมดอายุ</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={expiry}
+                                        onChange={e => setExpiry(fmtExp(e.target.value))}
+                                        placeholder="MM / YY"
+                                        maxLength={7}
+                                        className={`w-full p-3.5 border-2 rounded-lg outline-none text-sm text-center font-mono transition-colors ${
+                                            submitted && expiryDigits !== 4 ? 'border-red-400 bg-red-50' :
+                                            expiryDigits === 4 ? 'border-green-400' :
+                                            'border-gray-300 focus:ring-2 focus:ring-[#6A2B86]'
+                                        }`}
+                                    />
+                                    {submitted && expiryDigits !== 4 && (
+                                        <p className="text-red-500 text-[10px]">⚠ ระบุ MM/YY</p>
+                                    )}
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">รหัสหลังบัตร (CVV)</label>
-                                    <input type="text" placeholder="***" className="w-full p-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6A2B86] outline-none text-sm text-center font-bold" />
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">CVV / CVC</label>
+                                    <input
+                                        type="password"
+                                        inputMode="numeric"
+                                        value={cvv}
+                                        onChange={e => setCvv(e.target.value.replace(/\D/g,'').slice(0,4))}
+                                        placeholder="•••"
+                                        maxLength={4}
+                                        className={`w-full p-3.5 border-2 rounded-lg outline-none text-sm text-center font-mono transition-colors ${
+                                            submitted && cvv.length < 3 ? 'border-red-400 bg-red-50' :
+                                            cvv.length >= 3 ? 'border-green-400' :
+                                            'border-gray-300 focus:ring-2 focus:ring-[#6A2B86]'
+                                        }`}
+                                    />
+                                    {submitted && cvv.length < 3 && (
+                                        <p className="text-red-500 text-[10px]">⚠ ระบุ CVV</p>
+                                    )}
                                 </div>
                             </div>
-                            <div className="pt-4 border-t border-gray-100 mt-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">รหัส OTP ยืนยันรายการ</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" placeholder="ตรวจสอบจาก SMS ของท่าน" className="flex-1 p-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6A2B86] outline-none text-sm" />
-                                        <button className="bg-gray-100 text-gray-500 px-4 rounded-lg text-xs font-bold hover:bg-gray-200">ขอรับอีกครั้ง</button>
-                                    </div>
+
+                            {/* OTP */}
+                            <div className="pt-4 border-t border-gray-100 space-y-1">
+                                <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">รหัส OTP ยืนยันรายการ</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={otp}
+                                        onChange={e => setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+                                        placeholder="ตรวจสอบจาก SMS ของท่าน"
+                                        maxLength={6}
+                                        className={`flex-1 p-3.5 border-2 rounded-lg outline-none text-sm font-mono tracking-widest transition-colors ${
+                                            submitted && otp.replace(/\D/g,'').length < 4 ? 'border-red-400 bg-red-50' :
+                                            otp.replace(/\D/g,'').length >= 4 ? 'border-green-400' :
+                                            'border-gray-300 focus:ring-2 focus:ring-[#6A2B86]'
+                                        }`}
+                                    />
+                                    <button className="bg-gray-100 text-gray-500 px-4 rounded-lg text-xs font-bold hover:bg-gray-200 flex-shrink-0">ขอรับอีกครั้ง</button>
                                 </div>
+                                {submitted && otp.replace(/\D/g,'').length < 4 && (
+                                    <p className="text-red-500 text-xs">⚠ กรอก OTP ที่ได้รับ (ตัวเลขเท่านั้น)</p>
+                                )}
                             </div>
                         </div>
 
-                        <button 
-                            onClick={() => showPopup(
-                                "เสร็จโจร! 🚨", 
-                                "คุณเผลอกรอกข้อมูลบัตรเครดิตลงในลิงก์ปลอม มิจฉาชีพได้ข้อมูลของคุณไปแล้ว! จำไว้ว่า MEA ไม่มีนโยบายส่งอีเมลขู่ตัดไฟและแนบลิงก์ให้กรอกข้อมูลบัตรแบบนี้ครับ ตรวจสอบผ่านแอป MEA Smart Life หรือเบอร์ 1130 เท่านั้น!", 
-                                "fail",
-                                true
-                            )}
-                            className="w-full py-4.5 bg-[#6A2B86] hover:bg-[#522168] text-white font-black rounded-xl shadow-lg transition-all transform active:scale-[0.98] text-lg uppercase tracking-wider"
+                        <button
+                            onClick={handleMeaSubmit}
+                            className={`w-full py-4 font-black rounded-xl shadow-lg transition-all transform active:scale-[0.98] text-lg uppercase tracking-wider ${
+                                allValid
+                                    ? 'bg-[#6A2B86] hover:bg-[#522168] text-white'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }`}
                         >
-                            ยืนยันและชำระเงิน
+                            {allValid ? 'ยืนยันและชำระเงิน →' : 'ยืนยันและชำระเงิน'}
                         </button>
+                        <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}`}</style>
                     </div>
                     
                     <div className="bg-gray-50 p-4 flex flex-col items-center gap-2 border-t border-gray-100">
