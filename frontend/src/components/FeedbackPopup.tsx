@@ -51,10 +51,10 @@ export default function FeedbackPopup({ isCorrect, explanation, onNext }: Props)
                             className={`text-2xl font-bold mb-1 ${isCorrect ? 'text-cyber-green' : 'text-cyber-red'
                                 }`}
                         >
-                            {isCorrect ? 'Threat Avoided!' : 'Threat Detected!'}
+                            {isCorrect ? 'รอดภัยคุกคามได้สำเร็จ! 🎉' : 'ตกเป็นเหยื่อภัยคุกคาม! ⚠️'}
                         </h2>
                         <p className="text-xs font-mono uppercase tracking-widest text-cyber-muted">
-                            {isCorrect ? 'Correct Response' : 'Incorrect Response'}
+                            {isCorrect ? 'ตอบสนองถูกต้อง' : 'ตอบสนองไม่ถูกต้อง'}
                         </p>
                     </div>
 
@@ -68,7 +68,7 @@ export default function FeedbackPopup({ isCorrect, explanation, onNext }: Props)
                         onClick={onNext}
                         className="cyber-btn-primary w-full text-base"
                     >
-                        Next Scenario →
+                        สถานการณ์ถัดไป →
                     </button>
                 </motion.div>
             </motion.div>

@@ -19,15 +19,15 @@ export default function RedFlagHighlighter({ content, redFlags, showRedFlags }: 
 
     // Sort flags by position of occurrence
     const sorted = [...redFlags].sort(
-        (a, b) => content.indexOf(a.text) - content.indexOf(b.text)
+        (a, b) => content.indexOf(a.part) - content.indexOf(b.part)
     );
 
     for (const flag of sorted) {
-        const idx = remaining.indexOf(flag.text);
+        const idx = remaining.indexOf(flag.part);
         if (idx === -1) continue;
         if (idx > 0) segments.push({ text: remaining.slice(0, idx) });
-        segments.push({ text: flag.text, flag });
-        remaining = remaining.slice(idx + flag.text.length);
+        segments.push({ text: flag.part, flag });
+        remaining = remaining.slice(idx + flag.part.length);
     }
     if (remaining.length > 0) segments.push({ text: remaining });
 
@@ -35,7 +35,7 @@ export default function RedFlagHighlighter({ content, redFlags, showRedFlags }: 
         <span className="whitespace-pre-wrap">
             {segments.map((seg, i) =>
                 seg.flag ? (
-                    <Tooltip key={i} reason={seg.flag.reason}>
+                    <Tooltip key={i} reason={seg.flag.desc}>
                         <motion.mark
                             initial={{ backgroundColor: 'transparent' }}
                             animate={{ backgroundColor: 'rgba(255, 59, 92, 0.3)' }}

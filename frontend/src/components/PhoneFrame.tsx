@@ -1,4 +1,4 @@
-import type { Choice, RedFlag } from '../types';
+import type { UiTrigger, UiTriggers, RedFlag } from '../types';
 import RedFlagHighlighter from './RedFlagHighlighter';
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -33,16 +33,18 @@ function BatteryIcon() {
 
 // ── Inline-clickable content renderer ─────────────────────────────────────────
 // Turns URLs in the message into tappable blue links that trigger a choice
-function ClickableContent({
-    content, redFlags, showRedFlags, linkChoice, onChoice, disabled,
-}: {
+interface ClickableContentProps {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    linkChoice: Choice | undefined;
-    onChoice: (label: string) => void;
+    inlineLinks: (UiTrigger & { isPass: boolean })[];
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
-}) {
+}
+
+function ClickableContent({
+    content, redFlags, showRedFlags, inlineLinks, onTrigger, disabled,
+}: ClickableContentProps) {
     // URL regex
     const urlRe = /(https?:\/\/[^\s]+)/g;
 
@@ -57,14 +59,18 @@ function ClickableContent({
         <span style={{ whiteSpace: 'pre-wrap' }}>
             {parts.map((part, i) => {
                 if (urlRe.test(part) || part.startsWith('http')) {
+                    const trigger = inlineLinks.find(t => t.label === part || part.includes(t.label));
                     return (
                         <span
                             key={i}
-                            onClick={() => !disabled && linkChoice && onChoice(linkChoice.label)}
+                            onClick={() => {
+                                if (disabled || !trigger) return;
+                                onTrigger(trigger, trigger.isPass);
+                            }}
                             style={{
                                 color: '#007aff',
                                 textDecoration: 'underline',
-                                cursor: disabled ? 'default' : 'pointer',
+                                cursor: (disabled || !trigger) ? 'default' : 'pointer',
                                 wordBreak: 'break-all',
                             }}
                         >{part}</span>
@@ -81,26 +87,22 @@ interface Props {
     content: string;
     redFlags: RedFlag[];
     showRedFlags: boolean;
-    choices: Choice[];
-    onChoice: (label: string) => void;
+    uiTriggers: UiTriggers;
+    onTrigger: (trigger: UiTrigger, isPass: boolean) => void;
     disabled: boolean;
 }
 
 export default function PhoneFrame({
-    sender, content, redFlags, showRedFlags, choices, onChoice, disabled,
+    sender, content, redFlags, showRedFlags, uiTriggers, onTrigger, disabled,
 }: Props) {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const displayName = sender.length > 22 ? sender.slice(0, 20) + '…' : sender;
 
-    // Map choices: "link" choice = wrong one (clicking url), "report" choice = correct one
-    // Added Thai keywords: คลิก, ลิงก์, เปิด, โอน, กด, รับ (Link)
-    // Added Thai keywords: ลบ, รายงาน, บล็อก, เมิน, ปิด, โทร, ไม่, ปฏิเสธ, แจ้ง, แซ (Report)
-    const linkChoice = choices.find(c =>
-        /click|link|open|visit|คลิก|ลิงก์|เปิด|โอน|กด|รับ/i.test(c.label)
-    ) ?? choices[0];
-    const reportChoice = choices.find(c =>
-        /ignore|report|junk|safe|delete|block|ลบ|รายงาน|บล็อก|เมิน|ปิด|โทร|ไม่|ปฏิเสธ|แจ้ง/i.test(c.label)
-    ) ?? choices[1];
+    const allInlineLinks = [
+        ...uiTriggers.fail_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: false })),
+        ...uiTriggers.pass_triggers.filter(t => t.type === 'inline_link').map(t => ({ ...t, isPass: true })),
+    ];
+    const backTrigger = uiTriggers.pass_triggers.find(t => t.type === 'back_button');
 
     return (
         <div style={{
@@ -189,10 +191,13 @@ export default function PhoneFrame({
                         flexShrink: 0,
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                            <button style={{
-                                background: 'none', border: 'none', cursor: 'default',
-                                display: 'flex', alignItems: 'center', gap: 4,
-                                color: '#007aff', padding: 0,
+                            <button
+                                onClick={() => { if (!disabled && backTrigger) onTrigger(backTrigger, true); }}
+                                style={{
+                                    background: 'none', border: 'none', cursor: (!disabled && backTrigger) ? 'pointer' : 'default',
+                                    display: 'flex', alignItems: 'center', gap: 4,
+                                    color: '#007aff', padding: 0,
+                                    opacity: disabled && backTrigger ? 0.5 : 1,
                             }}>
                                 <svg width="10" height="17" viewBox="0 0 10 17" fill="none">
                                     <path d="M8.5 1 L1.5 8.5 L8.5 16" stroke="#007aff" strokeWidth="2" strokeLinecap="round" />
@@ -260,8 +265,8 @@ export default function PhoneFrame({
                                     content={content}
                                     redFlags={redFlags}
                                     showRedFlags={showRedFlags}
-                                    linkChoice={linkChoice}
-                                    onChoice={onChoice}
+                                    inlineLinks={allInlineLinks}
+                                    onTrigger={onTrigger}
                                     disabled={disabled}
                                 />
                             </div>
@@ -271,35 +276,30 @@ export default function PhoneFrame({
                             fontFamily: '-apple-system, SF Pro Text, sans-serif',
                         }}>{time}</p>
 
-                        {/* ── Report Junk iOS-style button ── */}
-                        {reportChoice && (
-                            <div
-                                onClick={() => !disabled && onChoice(reportChoice.label)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 6,
-                                    marginTop: 18,
-                                    marginLeft: 34,
-                                    marginRight: 0,
-                                    padding: '9px 16px',
-                                    background: '#fff1f0',
-                                    border: '1px solid #ffa0a0',
-                                    borderRadius: 12,
-                                    cursor: disabled ? 'default' : 'pointer',
-                                    opacity: disabled ? 0.4 : 1,
-                                    transition: 'opacity 0.15s',
-                                    width: 'fit-content',
-                                }}
-                            >
-                                <span style={{ fontSize: 15 }}>🚫</span>
-                                <span style={{
-                                    color: '#ff3b30',
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    fontFamily: '-apple-system, SF Pro Text, sans-serif',
-                                }}>{reportChoice.label}</span>
+                        {/* ── Native iOS Report/Delete Link ── */}
+                        {uiTriggers.pass_triggers.filter(t => t.type !== 'back_button').length > 0 && (
+                            <div style={{
+                                marginTop: 32, textAlign: 'center', fontSize: 13,
+                                fontFamily: '-apple-system, SF Pro Text, sans-serif',
+                                color: '#8e8e93', borderTop: '0.5px solid #c6c6c8', paddingTop: 14,
+                                display: 'flex', flexDirection: 'column', gap: 6,
+                            }}>
+                                <span>ผู้ส่งคนนี้ไม่อยู่ในรายชื่อผู้ติดต่อของคุณ</span>
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 4 }}>
+                                    {uiTriggers.pass_triggers.filter(t => t.type !== 'back_button').map(t => (
+                                        <span
+                                            key={t.label}
+                                            onClick={() => { if (!disabled) onTrigger(t, true); }}
+                                            style={{
+                                                color: '#007aff', fontWeight: 400,
+                                                cursor: disabled ? 'default' : 'pointer',
+                                                opacity: disabled ? 0.4 : 1,
+                                            }}
+                                        >
+                                            {t.label}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

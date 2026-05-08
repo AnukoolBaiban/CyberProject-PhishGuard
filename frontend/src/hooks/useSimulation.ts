@@ -15,7 +15,7 @@ interface UseSimulationReturn extends SimulationState {
     currentScenario: Scenario | null;
     totalScenarios: number;
     isFinished: boolean;
-    submitChoice: (nickname: string, choiceLabel: string) => Promise<boolean>;
+    submitTrigger: (nickname: string, triggerLabel: string, isPass: boolean) => Promise<boolean>;
     nextScenario: () => void;
     reset: () => void;
 }
@@ -50,22 +50,19 @@ export function useSimulation(): UseSimulationReturn {
         return () => { cancelled = true; };
     }, []);
 
-    const submitChoice = useCallback(
-        async (nickname: string, choiceLabel: string): Promise<boolean> => {
+    const submitTrigger = useCallback(
+        async (nickname: string, triggerLabel: string, isPass: boolean): Promise<boolean> => {
             const scenario = state.scenarios[state.currentIndex];
             if (!scenario) return false;
 
-            const choice = scenario.choices.find((c) => c.label === choiceLabel);
-            if (!choice) return false;
-
-            const isCorrect = choice.is_correct;
+            const isCorrect = isPass;
             const newScore = state.score + (isCorrect ? 1 : 0);
 
             const answer: Answer = {
                 scenarioId: scenario.id,
-                choiceLabel,
+                triggerLabel,
                 isCorrect,
-                explanation: choice.explanation,
+                explanation: scenario.explanation,
             };
 
             setState((prev) => ({
@@ -76,11 +73,11 @@ export function useSimulation(): UseSimulationReturn {
 
             // Fire-and-forget to backend (don't block UI)
             postAttempt({
-                nickname,
+                user_nickname: nickname,
                 scenario_id: scenario.id,
-                choice_label: choiceLabel,
                 is_correct: isCorrect,
-                score: newScore,
+                score_points: newScore,
+                choice_label: triggerLabel,
             }).catch(console.error);
 
             return isCorrect;
@@ -113,7 +110,7 @@ export function useSimulation(): UseSimulationReturn {
         currentScenario,
         totalScenarios: state.scenarios.length,
         isFinished,
-        submitChoice,
+        submitTrigger,
         nextScenario,
         reset,
     };
