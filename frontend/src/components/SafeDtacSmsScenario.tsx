@@ -66,50 +66,7 @@ export default function SafeDtacSmsScenario({ onAction }: Props) {
         setPopup({ title, message, type, isFinal });
     };
 
-    // ── Shared Phone Shell ────────────────────────────────────────────────────
-    const PhoneShell = ({ children, bg = 'bg-white' }: { children: React.ReactNode; bg?: string }) => (
-        <div className="w-full h-full flex items-center justify-center py-4">
-            <div className={`relative w-full max-w-[390px] h-full max-h-[844px] ${bg} rounded-[55px] shadow-2xl border-[8px] border-slate-800 overflow-hidden flex flex-col`}>
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-800 rounded-b-3xl z-50" />
 
-                {/* Status bar */}
-                <div className="h-12 flex items-end justify-between px-8 pb-1 flex-shrink-0">
-                    <span className="text-[15px] font-semibold">9:41</span>
-                    <div className="flex gap-1.5 items-center text-black/50 text-[11px]">
-                        <span>●●●</span>
-                        <span>WiFi</span>
-                        <span>🔋</span>
-                    </div>
-                </div>
-
-                {children}
-
-                {/* Home indicator */}
-                <div className="h-8 flex justify-center items-center flex-shrink-0">
-                    <div className="w-32 h-1.5 bg-black/20 rounded-full" />
-                </div>
-            </div>
-
-            {/* Popup */}
-            {popup && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
-                        <div className={`p-6 text-center ${popup.type === 'success' ? 'bg-green-50' : popup.type === 'fail' ? 'bg-red-50' : 'bg-orange-50'}`}>
-                            <div className="text-4xl mb-3">{popup.type === 'success' ? '✅' : popup.type === 'fail' ? '🚨' : '⚠️'}</div>
-                            <h3 className={`text-xl font-bold mb-2 ${popup.type === 'success' ? 'text-green-700' : popup.type === 'fail' ? 'text-red-700' : 'text-orange-700'}`}>
-                                {popup.title}
-                            </h3>
-                            <p className="text-slate-600 text-sm leading-relaxed">{popup.message}</p>
-                        </div>
-                        <button onClick={closePopup} className="w-full py-4 bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 transition-colors">
-                            ตกลง
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
 
     // ── Screen 1: Inbox ───────────────────────────────────────────────────────
     if (currentScreen === 'INBOX') {

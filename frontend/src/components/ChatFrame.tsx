@@ -59,7 +59,6 @@ export default function ChatFrame({
     sender, content, redFlags, showRedFlags, uiTriggers, onTrigger, disabled,
 }: Props) {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const inlineLinks = uiTriggers.fail_triggers.filter(t => t.type === 'inline_link');
 
     return (
         <div style={{

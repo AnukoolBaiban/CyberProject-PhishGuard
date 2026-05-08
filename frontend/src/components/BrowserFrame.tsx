@@ -64,12 +64,6 @@ const FOLDERS = [
     { name: 'Deleted', icon: '🗑️', count: 0, active: false },
 ];
 
-// Accent colours for each choice button to feel native to Outlook
-const CHOICE_STYLES: { bg: string; border: string; color: string; hoverBg: string }[] = [
-    { bg: '#0078d4', border: '#0078d4', color: '#fff', hoverBg: '#106ebe' },
-    { bg: '#202020', border: '#555', color: '#d4d4d4', hoverBg: '#2d2d2d' },
-    { bg: '#202020', border: '#555', color: '#d4d4d4', hoverBg: '#2d2d2d' },
-];
 
 export default function BrowserFrame({
     sender, subject, content, redFlags, showRedFlags, uiTriggers, onTrigger, disabled,

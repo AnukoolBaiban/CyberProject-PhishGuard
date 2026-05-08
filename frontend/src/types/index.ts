@@ -8,6 +8,7 @@ export interface UiTrigger {
 export interface UiTriggers {
     fail_triggers: UiTrigger[];
     pass_triggers: UiTrigger[];
+    component?: string;
 }
 
 export interface RedFlag {
