@@ -120,7 +120,7 @@ export default function SummaryPage() {
                         <p className="text-3xl mb-2">🏆</p>
                         <p className="text-cyber-green font-bold">ได้คะแนนเต็ม 100%!</p>
                         <p className="text-cyber-muted text-sm mt-1">
-                            คุณตรวจจับภัยคุกคามได้ทุกข้อ คุณคือนักรักษาดิจิทัลตัวจริง!
+                            สุดยอดไปเลย! คุณตรวจเจอภัยคุกคามครบทุกข้อ ยกตำแหน่งสุดยอดการ์ดเฝ้าระวังความปลอดภัยให้เลย!
                         </p>
                     </motion.div>
                 )}

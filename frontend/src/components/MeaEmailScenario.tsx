@@ -137,7 +137,7 @@ export default function MeaEmailScenario({ onAction }: Props) {
             return;
         }
         showPopup(
-            'เสร็จโจร! 🚨',
+            'คุณโดนหลอกแล้ว! 🚨',
             `คุณกรอกข้อมูลบัตรหมายเลข ${cardNum} ลงในลิงก์ปลอม! มิจฉาชีพได้ข้อมูลของคุณไปแล้ว จำไว้ว่า MEA ไม่มีนโยบายส่งอีเมลขู่ตัดไฟพร้อมลิงก์กรอกข้อมูลบัตรแบบนี้ ตรวจสอบผ่านแอป MEA Smart Life หรือเบอร์ 1130 เท่านั้น!`,
             'fail',
             true,
@@ -270,7 +270,7 @@ export default function MeaEmailScenario({ onAction }: Props) {
     // ── Screen: Email Detail ───────────────────────────────────────────────────
     if (currentScreen === 'EMAIL_DETAIL') {
         return (
-            <BrowserShell url="https://mail.google.com/mail/u/0/#inbox/MEA0200041532">
+            <BrowserShell url="https://mail.google.com/mail/u/0/#inbox/MEA0200041532" popup={popup} onClose={closePopup} currentScreen={currentScreen}>
                 <div className="absolute inset-0 bg-white flex flex-col overflow-y-auto">
                     {/* Gmail Detail Actions */}
                     <div className="h-12 border-b border-gray-100 flex items-center px-6 gap-8 text-gray-500 sticky top-0 bg-white z-10 flex-shrink-0">
@@ -280,7 +280,7 @@ export default function MeaEmailScenario({ onAction }: Props) {
                         <div className="flex gap-6 items-center">
                             <span className="cursor-default hover:bg-gray-100 p-2 rounded-full text-lg" title="Archive">📥</span>
                             <span 
-                                onClick={() => showPopup("ฉลาดมาก!", "การตรวจสอบผู้ส่งและแจ้งสแปม คือการป้องกัน Phishing ที่ดีที่สุดครับ ✅", "success", true)}
+                                onClick={() => showPopup("เก่งมาก!", "การตรวจสอบผู้ส่งและแจ้งสแปม คือการป้องกัน Phishing ที่ดีที่สุดครับ ✅", "success", true)}
                                 className="cursor-pointer hover:bg-gray-100 p-2 rounded-full text-lg" title="Report Spam"
                             >⚠️</span>
                             <span 

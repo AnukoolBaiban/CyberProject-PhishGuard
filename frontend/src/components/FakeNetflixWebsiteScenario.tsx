@@ -71,7 +71,7 @@ export default function FakeNetflixWebsiteScenario({ onAction }: Props) {
             return;
         }
         showPopup(
-            'เสร็จโจร! 🚨',
+            'คุณโดนหลอกแล้ว! 🚨',
             `คุณกรอกข้อมูลบัตรเครดิตหมายเลข ${cardNum} ลงในเว็บไซต์ปลอม! มิจฉาชีพได้ข้อมูลทั้งหมดไปแล้ว จำไว้ว่า URL ที่ถูกต้องต้องเป็น netflix.com เท่านั้น ไม่ใช่ netfl1x-billing-update-th.com`,
             'fail',
             true,

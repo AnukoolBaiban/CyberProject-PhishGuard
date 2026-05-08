@@ -213,7 +213,7 @@ export default function SafeDtacSmsScenario({ onAction }: Props) {
                                 {/* Report Junk — false alarm */}
                                 <button
                                     onClick={() => showPopup(
-                                        'รอก่อน! 🤔',
+                                        'เดี๋ยวก่อน! 🤔',
                                         'ก่อนรายงานว่าเป็น Junk ลองตรวจสอบ Sender ID และโดเมนลิงก์ดูก่อน dtac เป็น Sender ID จดทะเบียนถูกต้อง และลิงก์ชี้ไปยัง dtac.co.th ซึ่งเป็นโดเมนทางการ',
                                         'warning',
                                     )}

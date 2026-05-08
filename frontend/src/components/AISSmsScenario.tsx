@@ -86,7 +86,7 @@ export default function AISSmsScenario({ onAction }: Props) {
             return;
         }
         showPopup(
-            'เสร็จโจร!',
+            'คุณโดนหลอกแล้ว!',
             `🚨 คุณกรอกเบอร์ ${phone} ลงในเว็บไซต์ปลอมเรียบร้อยแล้ว มิจฉาชีพได้เบอร์ของคุณไป! สังเกตที่ URL: เว็บจริงของ AIS คือ ais.th ไม่ใช่ ais-redeem-point.com`,
             'fail',
             true,
@@ -280,7 +280,7 @@ export default function AISSmsScenario({ onAction }: Props) {
     // ── Screen: Fake Browser ───────────────────────────────────────────────────
     if (currentScreen === 'FAKE_BROWSER') {
         return (
-            <PhoneShell bg="bg-white">
+            <PhoneShell bg="bg-white" popup={popup} onClose={closePopup}>
                 {/* Safari Chrome */}
                 <div className="bg-[#F9F9F9] border-b border-slate-300 pt-1 flex flex-col gap-1.5 flex-shrink-0">
                     <div className="flex justify-between items-center px-4 py-1">
