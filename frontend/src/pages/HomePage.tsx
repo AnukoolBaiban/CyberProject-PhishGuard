@@ -111,19 +111,7 @@ export default function HomePage() {
                 </p>
             </motion.div>
 
-            {/* Feature hints */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="mt-10 flex flex-wrap justify-center gap-3 text-xs text-cyber-muted"
-            >
-                {['🚩 ไฮไลต์จุดน่าสงสัย', '📊 คะแนนภูมิคุ้มกันดิจิทัล', '💡 ผลตอบรับทันที'].map((f) => (
-                    <span key={f} className="px-3 py-1.5 border border-cyber-border rounded-full bg-cyber-surface">
-                        {f}
-                    </span>
-                ))}
-            </motion.div>
+
         </motion.div>
     );
 }

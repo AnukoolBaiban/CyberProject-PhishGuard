@@ -162,28 +162,7 @@ export default function SimulationPage() {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {currentScenario.hint_message && (
-                            <button
-                                onClick={() => setShowHint(true)}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-cyber-border text-cyber-muted hover:border-[#ff9800] hover:text-[#ff9800] transition-all duration-200"
-                            >
-                                💡 ขอคำใบ้
-                            </button>
-                        )}
-                        <button
-                            id="red-flag-btn"
-                            onClick={() => setShowRedFlags((v) => !v)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-                            border transition-all duration-200
-                            ${showRedFlags
-                                    ? 'border-cyber-red text-cyber-red bg-cyber-red/10'
-                                    : 'border-cyber-border text-cyber-muted hover:border-cyber-red hover:text-cyber-red'
-                                }`}
-                        >
-                            🚩 {showRedFlags ? 'ซ่อน' : 'แสดง'}จุดน่าสงสัย
-                        </button>
-                    </div>
+
                 </div>
 
                 {/* Hint Message Box */}
