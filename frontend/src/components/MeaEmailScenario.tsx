@@ -551,8 +551,6 @@ export default function MeaEmailScenario({ onAction }: Props) {
                         </p>
                     </div>
                 </div>
-                
-                <p className="mt-8 text-xs text-gray-400 hover:underline cursor-default">กลับสู่หน้าหลักการไฟฟ้านครหลวง</p>
             </div>
         </BrowserShell>
     );
